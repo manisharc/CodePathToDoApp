@@ -1,10 +1,10 @@
 package com.example.chmanish.todoapp;
 
 import android.content.Intent;
+import android.database.sqlite.SQLiteDatabase;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -12,20 +12,24 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.EditText;
 import android.widget.ListView;
+import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import org.apache.commons.io.FileUtils;
-
-import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
+import java.util.List;
+
+import nl.qbusict.cupboard.QueryResultIterable;
+
+import static nl.qbusict.cupboard.CupboardFactory.cupboard;
 
 public class MainActivity extends AppCompatActivity {
 
-    ArrayList<String> todoItems;
+    static SQLiteDatabase db;
+    ArrayList<itemRecord> todoItems;
+    ArrayList<String> taskNameArray;
     ArrayAdapter<String> aToDoAdapter;
     ListView lvItems;
     EditText etEditText;
@@ -42,16 +46,28 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        populateArrayItems();
+
         lvItems = (ListView) findViewById(R.id.lvItems);
-        lvItems.setAdapter(aToDoAdapter);
         etEditText = (EditText) findViewById(R.id.etEditText);
+
+        // setup database
+        DBHelper dbHelper = new DBHelper(this);
+        dbHelper.onUpgrade(dbHelper.getWritableDatabase(), 1, 2);
+        db = dbHelper.getWritableDatabase();
+
+        // here is where you associate the name array.
+        taskNameArray = getAllTasksNames();
+        aToDoAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, taskNameArray);
+        lvItems.setAdapter(aToDoAdapter);
+
         lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
+                itemRecord i = todoItems.get(position);
+                cupboard().withDatabase(db).delete(itemRecord.class, i.get_id());
                 todoItems.remove(position);
+                taskNameArray.remove(position);
                 aToDoAdapter.notifyDataSetChanged();
-                writeItems();
                 return true;
             }
         });
@@ -61,13 +77,10 @@ public class MainActivity extends AppCompatActivity {
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent i = new Intent(MainActivity.this, EditItemActivity.class);
                 i.putExtra("position", position);
-                i.putExtra("itemName", todoItems.get(position));
+                i.putExtra("itemName", todoItems.get(position).taskDescription);
                 startActivityForResult(i, REQUEST_CODE);
-
-
             }
         });
-
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
@@ -83,31 +96,27 @@ public class MainActivity extends AppCompatActivity {
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
+    private static List<itemRecord> getListFromQueryResultIterator(QueryResultIterable<itemRecord> iter) {
 
-    public void populateArrayItems() {
-        readItems();
-        aToDoAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, todoItems);
+        final List<itemRecord> tasks = new ArrayList<itemRecord>();
+        for (itemRecord t : iter) {
+            tasks.add(t);
+        }
+        iter.close();
+
+        return tasks;
     }
 
-    private void readItems() {
-        File filesDir = getFilesDir();
-        File file = new File(filesDir, "todo.txt");
-        try {
-            todoItems = new ArrayList<String>(FileUtils.readLines(file));
-        } catch (IOException e){
-            todoItems = new ArrayList<String>();
-            Log.d("Manisha", "Did we not open the file?");
-        }
-    }
+    public ArrayList<String> getAllTasksNames() {
+        final QueryResultIterable<itemRecord> iter = cupboard().withDatabase(db).query(itemRecord.class).query();
+        todoItems = (ArrayList<itemRecord>) getListFromQueryResultIterator(iter);
 
-    private void writeItems() {
-        File filesDir = getFilesDir();
-        File file = new File(filesDir, "todo.txt");
-        try {
-            FileUtils.writeLines(file, todoItems);
-        } catch (IOException e){
-
+        ArrayList<String> taskNameArray = new ArrayList<String>();
+        for (itemRecord b : todoItems) {
+            taskNameArray.add(b.getTaskDescription());
         }
+
+        return taskNameArray;
     }
 
     @Override
@@ -133,10 +142,19 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onAddItem(View view) {
-        aToDoAdapter.add(etEditText.getText().toString());
-        etEditText.setText("");
-        writeItems();
-
+        String s = etEditText.getText().toString();
+        if (!s.isEmpty()){
+            itemRecord i = new itemRecord(s);
+            cupboard().withDatabase(db).put(i);
+            todoItems.add(i);
+            taskNameArray.add(i.getTaskDescription());
+            //aToDoAdapter.add(i.getTaskDescription());
+            aToDoAdapter.notifyDataSetChanged();
+            // Empty the edit text
+            etEditText.setText("");
+        } else {
+            Toast.makeText(getApplicationContext(), "no empty tasks", Toast.LENGTH_SHORT).show();
+        }
     }
 
     @Override
@@ -146,9 +164,13 @@ public class MainActivity extends AppCompatActivity {
             // Extract name value from result extras
             String name = data.getExtras().getString("itemNameUpdated");
             int position = data.getExtras().getInt("position", 0);
-            todoItems.set(position, name);
+            itemRecord i = todoItems.get(position);
+            i.setTaskDescription(name);
+            cupboard().withDatabase(db).put(i);
+            todoItems.set(position, i);
+            taskNameArray.set(position, i.getTaskDescription());
             aToDoAdapter.notifyDataSetChanged();
-            writeItems();
+
         }
     }
 
