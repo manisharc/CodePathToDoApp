@@ -69,8 +69,8 @@
                 android:layout_height="wrap_content"
                 android:id="@+id/spPriority"
                 android:entries="@array/prio_array"
-                android:layout_column="10"
-                android:prompt="@string/spinnerPrompt" />
+                android:layout_column="10" />
+
 
         </TableRow>
 

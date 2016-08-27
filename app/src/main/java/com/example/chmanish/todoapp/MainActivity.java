@@ -70,10 +70,12 @@ public class MainActivity extends AppCompatActivity {
         lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                Intent i = new Intent(MainActivity.this, EditItemActivity.class);
-                i.putExtra("position", position);
-                i.putExtra("itemName", todoItems.get(position).taskDescription);
+                Intent i = new Intent(MainActivity.this, AddTask.class);
+                itemRecord item = todoItems.get(position);
+                i.putExtra("existingItem", item);
+                i.putExtra("existingItemPosition", position);
                 startActivityForResult(i, REQUEST_CODE_EDIT);
+
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -140,13 +142,17 @@ public class MainActivity extends AppCompatActivity {
         // REQUEST_CODE is defined above
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_EDIT) {
             // Extract name value from result extras
-            String name = data.getExtras().getString("itemNameUpdated");
+            itemRecord i = (itemRecord) data.getSerializableExtra("existingItemUpdates");
             int position = data.getExtras().getInt("position", 0);
-            itemRecord i = todoItems.get(position);
-            i.setTaskDescription(name);
-            cupboard().withDatabase(db).put(i);
-            todoItems.set(position, i);
-            aToDoAdapter.notifyDataSetChanged();
+            if (i!= null){
+                itemRecord updateItem = todoItems.get(position);
+                updateItem.setTaskPriority(i.getTaskPriority());
+                updateItem.setTaskDescription(i.getTaskDescription());
+                cupboard().withDatabase(db).put(updateItem);
+                todoItems.set(position, updateItem);
+                aToDoAdapter.notifyDataSetChanged();
+
+            }
 
         }
 
