@@ -1,9 +1,15 @@
 package com.example.chmanish.todoapp;
 
+import java.io.Serializable;
+
 /**
  * Created by chmanish on 8/27/16.
  */
-public class itemRecord {
+public class itemRecord implements Serializable {
+
+    // Do we really need this
+    private static final long serialVersionUID = 5177222050535318633L;
+
     public Long _id; // for cupboard
     // Task Description
     public String taskDescription;

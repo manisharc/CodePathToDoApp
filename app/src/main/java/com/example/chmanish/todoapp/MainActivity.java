@@ -9,10 +9,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.EditText;
 import android.widget.ListView;
-import android.widget.Toast;
 
 import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
@@ -29,12 +26,12 @@ public class MainActivity extends AppCompatActivity {
 
     static SQLiteDatabase db;
     ArrayList<itemRecord> todoItems;
-    ArrayList<String> taskNameArray;
-    ArrayAdapter<String> aToDoAdapter;
+    CustomItemAdapter aToDoAdapter;
     ListView lvItems;
-    EditText etEditText;
+
     // REQUEST_CODE can be any value we like, used to determine the result type later
-    private final int REQUEST_CODE = 20;
+    private final int REQUEST_CODE_EDIT = 20;
+    private final int REQUEST_CODE_ADD = 21;
 
     /**
      * ATTENTION: This was auto-generated to implement the App Indexing API.
@@ -48,16 +45,15 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         lvItems = (ListView) findViewById(R.id.lvItems);
-        etEditText = (EditText) findViewById(R.id.etEditText);
 
         // setup database
         DBHelper dbHelper = new DBHelper(this);
         dbHelper.onUpgrade(dbHelper.getWritableDatabase(), 1, 2);
         db = dbHelper.getWritableDatabase();
 
-        // here is where you associate the name array.
-        taskNameArray = getAllTasksNames();
-        aToDoAdapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, taskNameArray);
+        populateToDoItems();
+
+        aToDoAdapter = new CustomItemAdapter(this, todoItems);
         lvItems.setAdapter(aToDoAdapter);
 
         lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
@@ -66,7 +62,6 @@ public class MainActivity extends AppCompatActivity {
                 itemRecord i = todoItems.get(position);
                 cupboard().withDatabase(db).delete(itemRecord.class, i.get_id());
                 todoItems.remove(position);
-                taskNameArray.remove(position);
                 aToDoAdapter.notifyDataSetChanged();
                 return true;
             }
@@ -78,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
                 Intent i = new Intent(MainActivity.this, EditItemActivity.class);
                 i.putExtra("position", position);
                 i.putExtra("itemName", todoItems.get(position).taskDescription);
-                startActivityForResult(i, REQUEST_CODE);
+                startActivityForResult(i, REQUEST_CODE_EDIT);
             }
         });
         /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
@@ -107,16 +102,10 @@ public class MainActivity extends AppCompatActivity {
         return tasks;
     }
 
-    public ArrayList<String> getAllTasksNames() {
+    public void populateToDoItems() {
         final QueryResultIterable<itemRecord> iter = cupboard().withDatabase(db).query(itemRecord.class).query();
         todoItems = (ArrayList<itemRecord>) getListFromQueryResultIterator(iter);
 
-        ArrayList<String> taskNameArray = new ArrayList<String>();
-        for (itemRecord b : todoItems) {
-            taskNameArray.add(b.getTaskDescription());
-        }
-
-        return taskNameArray;
     }
 
     @Override
@@ -142,25 +131,14 @@ public class MainActivity extends AppCompatActivity {
     }
 
     public void onAddItem(View view) {
-        String s = etEditText.getText().toString();
-        if (!s.isEmpty()){
-            itemRecord i = new itemRecord(s);
-            cupboard().withDatabase(db).put(i);
-            todoItems.add(i);
-            taskNameArray.add(i.getTaskDescription());
-            //aToDoAdapter.add(i.getTaskDescription());
-            aToDoAdapter.notifyDataSetChanged();
-            // Empty the edit text
-            etEditText.setText("");
-        } else {
-            Toast.makeText(getApplicationContext(), "no empty tasks", Toast.LENGTH_SHORT).show();
-        }
+        Intent i = new Intent(MainActivity.this, AddTask.class);
+        startActivityForResult(i, REQUEST_CODE_ADD);
     }
 
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         // REQUEST_CODE is defined above
-        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE) {
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_EDIT) {
             // Extract name value from result extras
             String name = data.getExtras().getString("itemNameUpdated");
             int position = data.getExtras().getInt("position", 0);
@@ -168,10 +146,18 @@ public class MainActivity extends AppCompatActivity {
             i.setTaskDescription(name);
             cupboard().withDatabase(db).put(i);
             todoItems.set(position, i);
-            taskNameArray.set(position, i.getTaskDescription());
             aToDoAdapter.notifyDataSetChanged();
 
         }
+
+        if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_ADD) {
+            itemRecord i = (itemRecord) data.getSerializableExtra("newItem");
+            cupboard().withDatabase(db).put(i);
+            todoItems.add(i);
+            aToDoAdapter.notifyDataSetChanged();
+
+        }
+
     }
 
     @Override
