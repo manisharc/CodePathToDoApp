@@ -2,6 +2,8 @@ package com.example.chmanish.todoapp;
 
 import java.io.Serializable;
 
+import nl.qbusict.cupboard.annotation.Column;
+
 /**
  * Created by chmanish on 8/27/16.
  */
@@ -10,32 +12,37 @@ public class itemRecord implements Serializable {
     // Do we really need this
     private static final long serialVersionUID = 5177222050535318633L;
 
-    public Long _id; // for cupboard
+    public Long _id; //
     // Task Description
+    @Column("taskDescription")
     public String taskDescription;
+
     // Task Priority
-    public Enum<priority> taskPriority;
-    // Task Due Date
+    @Column("taskPriority")
+    public int taskPriority;
 
-
+    public static int LOW_TO_INT = 2;
+    public static int MEDIUM_TO_INT = 1;
+    public static int HIGH_TO_INT = 0;
+   /* // Task Due Date
     public static enum priority {
         LOW, MEDIUM, HIGH;
-    }
+    }*/
 
     public itemRecord(){
         this.taskDescription="";
-        this.taskPriority = priority.LOW;
+        this.taskPriority = LOW_TO_INT;
     }
     public itemRecord(String name){
         this.taskDescription = name;
-        this.taskPriority = priority.LOW;
+        this.taskPriority = LOW_TO_INT;
     }
 
-    public Enum<priority> getTaskPriority() {
+    public int getTaskPriority() {
         return taskPriority;
     }
 
-    public void setTaskPriority(Enum<priority> priority) {
+    public void setTaskPriority(int priority) {
         this.taskPriority = priority;
     }
 

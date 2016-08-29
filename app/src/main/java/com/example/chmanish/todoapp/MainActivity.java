@@ -1,7 +1,7 @@
 package com.example.chmanish.todoapp;
 
 import android.content.Intent;
-import android.database.sqlite.SQLiteDatabase;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,21 +15,15 @@ import com.google.android.gms.appindexing.Action;
 import com.google.android.gms.appindexing.AppIndex;
 import com.google.android.gms.common.api.GoogleApiClient;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import nl.qbusict.cupboard.QueryResultIterable;
-
-import static nl.qbusict.cupboard.CupboardFactory.cupboard;
-
 public class MainActivity extends AppCompatActivity {
 
-    static SQLiteDatabase db;
-    ArrayList<itemRecord> todoItems;
-    CustomItemAdapter aToDoAdapter;
+    ItemDatabaseHelper handler;
+    Cursor todoCursor;
+    ToDoCursorAdapter toDoCursorAdapter;
+
     ListView lvItems;
 
-    // REQUEST_CODE can be any value we like, used to determine the result type later
+    // REQUEST_CODE to differentiate between the ADD and EDIT views
     private final int REQUEST_CODE_EDIT = 20;
     private final int REQUEST_CODE_ADD = 21;
 
@@ -47,66 +41,42 @@ public class MainActivity extends AppCompatActivity {
         lvItems = (ListView) findViewById(R.id.lvItems);
 
         // setup database
-        DBHelper dbHelper = new DBHelper(this);
-        dbHelper.onUpgrade(dbHelper.getWritableDatabase(), 1, 2);
-        db = dbHelper.getWritableDatabase();
+        handler = ItemDatabaseHelper.getInstance(this);
 
-        populateToDoItems();
+        todoCursor = handler.getAllItemsAscending();
+        toDoCursorAdapter = new ToDoCursorAdapter(this, todoCursor);
 
-        aToDoAdapter = new CustomItemAdapter(this, todoItems);
-        lvItems.setAdapter(aToDoAdapter);
+        lvItems.setAdapter(toDoCursorAdapter);
 
         lvItems.setOnItemLongClickListener(new AdapterView.OnItemLongClickListener() {
             @Override
             public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
-                itemRecord i = todoItems.get(position);
-                cupboard().withDatabase(db).delete(itemRecord.class, i.get_id());
-                todoItems.remove(position);
-                aToDoAdapter.notifyDataSetChanged();
+                handler.deleteItem((int)id);
+                refreshView();
                 return true;
             }
         });
+
 
         lvItems.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 Intent i = new Intent(MainActivity.this, AddTask.class);
-                itemRecord item = todoItems.get(position);
+                itemRecord item = handler.getItem((int)id);
                 i.putExtra("existingItem", item);
-                i.putExtra("existingItemPosition", position);
+                i.putExtra("existingItemId", (int)id);
                 startActivityForResult(i, REQUEST_CODE_EDIT);
 
             }
         });
-        /*Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });*/
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.
         client = new GoogleApiClient.Builder(this).addApi(AppIndex.API).build();
     }
-    private static List<itemRecord> getListFromQueryResultIterator(QueryResultIterable<itemRecord> iter) {
-
-        final List<itemRecord> tasks = new ArrayList<itemRecord>();
-        for (itemRecord t : iter) {
-            tasks.add(t);
-        }
-        iter.close();
-
-        return tasks;
-    }
-
-    public void populateToDoItems() {
-        final QueryResultIterable<itemRecord> iter = cupboard().withDatabase(db).query(itemRecord.class).query();
-        todoItems = (ArrayList<itemRecord>) getListFromQueryResultIterator(iter);
+    public void refreshView(){
+        todoCursor = handler.getAllItemsAscending();
+        toDoCursorAdapter.changeCursor(todoCursor);
 
     }
 
@@ -143,14 +113,17 @@ public class MainActivity extends AppCompatActivity {
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_EDIT) {
             // Extract name value from result extras
             itemRecord i = (itemRecord) data.getSerializableExtra("existingItemUpdates");
-            int position = data.getExtras().getInt("position", 0);
+            int id = (int) data.getSerializableExtra("existingItemId");
             if (i!= null){
-                itemRecord updateItem = todoItems.get(position);
+                handler.deleteItem((int)id);
+                handler.addItem(i);
+                // Update to get directly from the db
+                /*itemRecord updateItem = cupboard().withDatabase(db).get(itemRecord.class, i.get_id());
                 updateItem.setTaskPriority(i.getTaskPriority());
                 updateItem.setTaskDescription(i.getTaskDescription());
-                cupboard().withDatabase(db).put(updateItem);
-                todoItems.set(position, updateItem);
-                aToDoAdapter.notifyDataSetChanged();
+                cupboard().withDatabase(db).put(updateItem);*/
+                //handler.addOrUpdateItem(i);
+                refreshView();
 
             }
 
@@ -158,10 +131,8 @@ public class MainActivity extends AppCompatActivity {
 
         if (resultCode == RESULT_OK && requestCode == REQUEST_CODE_ADD) {
             itemRecord i = (itemRecord) data.getSerializableExtra("newItem");
-            cupboard().withDatabase(db).put(i);
-            todoItems.add(i);
-            aToDoAdapter.notifyDataSetChanged();
-
+            handler.addItem(i);
+            refreshView();
         }
 
     }
@@ -189,6 +160,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onStop() {
         super.onStop();
+        todoCursor.close();
 
         // ATTENTION: This was auto-generated to implement the App Indexing API.
         // See https://g.co/AppIndexing/AndroidStudio for more information.

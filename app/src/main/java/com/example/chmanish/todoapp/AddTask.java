@@ -11,8 +11,8 @@ import android.widget.Toast;
 public class AddTask extends AppCompatActivity {
 
     boolean isEditTask = false;
-    int position;
     EditText etEditTextAdd;
+    int existingItemId;
     Spinner sp;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -23,11 +23,18 @@ public class AddTask extends AppCompatActivity {
 
         itemRecord i = (itemRecord) getIntent().getSerializableExtra("existingItem");
         if (i != null){
+            // If this was called to edit a task
             etEditTextAdd.setText(i.getTaskDescription());
             etEditTextAdd.setSelection(i.getTaskDescription().length());
-            sp.setSelection(getIndex(sp, i.getTaskPriority().toString()));
+            if (i.getTaskPriority() == itemRecord.LOW_TO_INT) {
+                sp.setSelection(0);
+            } else if (i.getTaskPriority() == itemRecord.MEDIUM_TO_INT) {
+                sp.setSelection(1);
+            } else
+                sp.setSelection(2);
+
             isEditTask = true;
-            position = (int) getIntent().getSerializableExtra("existingItemPosition");
+            existingItemId = (int)getIntent().getSerializableExtra("existingItemId");
         }
         else {
             //Set it to the first element of the array
@@ -36,7 +43,6 @@ public class AddTask extends AppCompatActivity {
         }
     }
 
-    //private method of your class
     private int getIndex(Spinner spinner, String myString)
     {
         int index = 0;
@@ -56,17 +62,17 @@ public class AddTask extends AppCompatActivity {
             itemRecord i = new itemRecord(s);
             String value = sp.getSelectedItem().toString();
             if (value.equals("LOW") || value.equals("Low")) {
-                i.setTaskPriority(itemRecord.priority.LOW);
+                i.setTaskPriority(itemRecord.LOW_TO_INT);
             } else if (value.equals("MEDIUM") || value.equals("Medium")) {
-                i.setTaskPriority(itemRecord.priority.MEDIUM);
+                i.setTaskPriority(itemRecord.MEDIUM_TO_INT);
             } else if (value.equals("HIGH") || value.equals("High")) {
-                i.setTaskPriority(itemRecord.priority.HIGH);
+                i.setTaskPriority(itemRecord.HIGH_TO_INT);
             }
 
             Intent data = new Intent();
             if (isEditTask) {
                 data.putExtra("existingItemUpdates", i);
-                data.putExtra("position", position);
+                data.putExtra("existingItemId", existingItemId);
             }
             else {
                 data.putExtra("newItem", i);
