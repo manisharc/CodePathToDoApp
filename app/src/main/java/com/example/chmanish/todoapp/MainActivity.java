@@ -117,12 +117,6 @@ public class MainActivity extends AppCompatActivity {
             if (i!= null){
                 handler.deleteItem((int)id);
                 handler.addItem(i);
-                // Update to get directly from the db
-                /*itemRecord updateItem = cupboard().withDatabase(db).get(itemRecord.class, i.get_id());
-                updateItem.setTaskPriority(i.getTaskPriority());
-                updateItem.setTaskDescription(i.getTaskDescription());
-                cupboard().withDatabase(db).put(updateItem);*/
-                //handler.addOrUpdateItem(i);
                 refreshView();
 
             }

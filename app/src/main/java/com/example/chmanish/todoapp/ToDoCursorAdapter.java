@@ -2,11 +2,12 @@ package com.example.chmanish.todoapp;
 
 import android.content.Context;
 import android.database.Cursor;
+import android.graphics.Color;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 import android.widget.CursorAdapter;
+import android.widget.TextView;
 
 /**
  * Created by chmanish on 8/28/16.
@@ -36,10 +37,13 @@ public class ToDoCursorAdapter extends CursorAdapter {
         String prio = "LOW";
         if (priority == itemRecord.HIGH_TO_INT) {
             prio = "HIGH";
+            tvPriority.setTextColor(Color.rgb(255,0,30));
         }else if (priority == itemRecord.LOW_TO_INT) {
             prio = "LOW";
+            tvPriority.setTextColor(Color.BLUE);
         }else if (priority == itemRecord.MEDIUM_TO_INT) {
             prio = "MEDIUM";
+            tvPriority.setTextColor(Color.rgb(30,200,0));
         }
         // Populate fields with extracted properties
         tvBody.setText(body);
