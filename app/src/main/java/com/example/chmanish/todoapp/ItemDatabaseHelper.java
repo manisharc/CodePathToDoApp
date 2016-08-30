@@ -8,7 +8,7 @@ import android.database.sqlite.SQLiteOpenHelper;
 import android.util.Log;
 
 /**
- * Created by chmanish on 8/28/16.
+ * Class with the table definitions and datebase apis
  */
 public class ItemDatabaseHelper extends SQLiteOpenHelper {
     // Database Info
@@ -29,32 +29,21 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
     private static ItemDatabaseHelper sInstance;
 
     public static synchronized ItemDatabaseHelper getInstance(Context context) {
-        // Use the application context, which will ensure that you
-        // don't accidentally leak an Activity's context.
-        // See this article for more information: http://bit.ly/6LRzfx
         if (sInstance == null) {
             sInstance = new ItemDatabaseHelper(context.getApplicationContext());
         }
         return sInstance;
     }
 
-    /**
-     * Constructor should be private to prevent direct instantiation.
-     * Make a call to the static method "getInstance()" instead.
-     */
     private ItemDatabaseHelper(Context context) {
         super(context, DATABASE_NAME, null, DATABASE_VERSION);
     }
 
-    // Called when the database connection is being configured.
-    // Configure database settings for things like foreign key support, write-ahead logging, etc.
     @Override
     public void onConfigure(SQLiteDatabase db) {
         super.onConfigure(db);
     }
 
-    // Called when the database is created for the FIRST time.
-    // If a database already exists on disk with the same DATABASE_NAME, this method will NOT be called.
     @Override
     public void onCreate(SQLiteDatabase db) {
         String CREATE_ITEMS_TABLE = "CREATE TABLE " + TABLE_ITEMS +
@@ -75,14 +64,12 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
     @Override
     public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
         if (oldVersion != newVersion) {
-            // Simplest implementation is to drop all old tables and recreate them
             db.execSQL("DROP TABLE IF EXISTS " + TABLE_ITEMS);
             onCreate(db);
         }
     }
 
     public long addItem(itemRecord item) {
-        // The database connection is cached so it's not expensive to call getWriteableDatabase() multiple times.
         SQLiteDatabase db = getWritableDatabase();
         long itemId = -1;
 
@@ -134,6 +121,7 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
         return null;
     }
 
+    // Gets all the items in ascending order of priority to be displayed in ListView
     public Cursor getAllItemsAscending(){
         SQLiteDatabase db = getWritableDatabase();
         String SELECT_QUERY =
@@ -142,12 +130,11 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
         return cursor;
     }
 
-    // Delete all posts and users in the database
+    // Deletes the item with the given id
     public void deleteItem(int id) {
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
-            // Order of deletions is important when foreign key relationships exist.
             db.delete(TABLE_ITEMS, KEY_ITEM_ID + "=" + id, null);
             db.setTransactionSuccessful();
         } catch (Exception e) {

@@ -5,14 +5,11 @@ import java.io.Serializable;
 import nl.qbusict.cupboard.annotation.Column;
 
 /**
- * Created by chmanish on 8/27/16.
+ * The task is stored in this form in the databse.
  */
 public class itemRecord implements Serializable {
 
-    // Do we really need this
-    private static final long serialVersionUID = 5177222050535318633L;
-
-    public Long _id; //
+    public Long _id;
     // Task Description
     @Column("taskDescription")
     public String taskDescription;

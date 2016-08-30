@@ -21,7 +21,7 @@ public class AddTask extends AppCompatActivity {
     private int day;
     private int month;
     private int year;
-    
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -31,7 +31,8 @@ public class AddTask extends AppCompatActivity {
         dpDueDate = (DatePicker)findViewById(R.id.dpDueDate);
 
         itemRecord i = (itemRecord) getIntent().getSerializableExtra("existingItem");
-        if (i != null){ //Edit task
+        if (i != null){
+            //Edit task
             etEditTextAdd.setText(i.getTaskDescription());
             etEditTextAdd.setSelection(i.getTaskDescription().length());
             if (i.getTaskPriority() == itemRecord.LOW_TO_INT) {
@@ -40,15 +41,15 @@ public class AddTask extends AppCompatActivity {
                 sp.setSelection(1);
             } else
                 sp.setSelection(2);
-
             isEditTask = true;
             existingItemId = (int)getIntent().getSerializableExtra("existingItemId");
             year = i.getTaskDueDateYear();
             month = i.getTaskDueDateMonth() - 1;
             day = i.getTaskDueDateDay();
         }
-        else { //Add new task
-            //Set it to the first element of the array
+        else {
+            //Add new task
+            //Default setting of spinner is LOW
             sp.setSelection(0);
             // Set the DatePicker to today's date
             final Calendar calendar = Calendar.getInstance();
@@ -59,7 +60,7 @@ public class AddTask extends AppCompatActivity {
         dpDueDate.init(year, month, day, null);
 
     }
-
+    // On clicking of button to "Save" item
     public void onSaveAddItem(View view) {
         String s = etEditTextAdd.getText().toString();
         if (!s.isEmpty()){
@@ -72,9 +73,7 @@ public class AddTask extends AppCompatActivity {
             } else if (value.equals("HIGH") || value.equals("High")) {
                 i.setTaskPriority(itemRecord.HIGH_TO_INT);
             }
-
             i.setDate(dpDueDate.getYear(), dpDueDate.getMonth() + 1, dpDueDate.getDayOfMonth());
-
             Intent data = new Intent();
             if (isEditTask) {
                 data.putExtra("existingItemUpdates", i);
