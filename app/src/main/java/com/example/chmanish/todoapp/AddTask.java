@@ -4,26 +4,34 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
+import android.widget.DatePicker;
 import android.widget.EditText;
 import android.widget.Spinner;
 import android.widget.Toast;
 
+import java.util.Calendar;
+
 public class AddTask extends AppCompatActivity {
 
-    boolean isEditTask = false;
-    EditText etEditTextAdd;
-    int existingItemId;
-    Spinner sp;
+    private boolean isEditTask = false;
+    private EditText etEditTextAdd;
+    private int existingItemId;
+    private Spinner sp;
+    private DatePicker dpDueDate;
+    private int day;
+    private int month;
+    private int year;
+    
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_add_task);
         etEditTextAdd = (EditText) findViewById(R.id.etEditTextAdd);
         sp = (Spinner)findViewById(R.id.spPriority);
+        dpDueDate = (DatePicker)findViewById(R.id.dpDueDate);
 
         itemRecord i = (itemRecord) getIntent().getSerializableExtra("existingItem");
-        if (i != null){
-            // If this was called to edit a task
+        if (i != null){ //Edit task
             etEditTextAdd.setText(i.getTaskDescription());
             etEditTextAdd.setSelection(i.getTaskDescription().length());
             if (i.getTaskPriority() == itemRecord.LOW_TO_INT) {
@@ -35,25 +43,21 @@ public class AddTask extends AppCompatActivity {
 
             isEditTask = true;
             existingItemId = (int)getIntent().getSerializableExtra("existingItemId");
+            year = i.getTaskDueDateYear();
+            month = i.getTaskDueDateMonth() - 1;
+            day = i.getTaskDueDateDay();
         }
-        else {
+        else { //Add new task
             //Set it to the first element of the array
             sp.setSelection(0);
-
+            // Set the DatePicker to today's date
+            final Calendar calendar = Calendar.getInstance();
+            year = calendar.get(Calendar.YEAR);
+            month = calendar.get(Calendar.MONTH);
+            day = calendar.get(Calendar.DAY_OF_MONTH);
         }
-    }
+        dpDueDate.init(year, month, day, null);
 
-    private int getIndex(Spinner spinner, String myString)
-    {
-        int index = 0;
-
-        for (int i=0;i<spinner.getCount();i++){
-            if (spinner.getItemAtPosition(i).toString().equalsIgnoreCase(myString)){
-                index = i;
-                break;
-            }
-        }
-        return index;
     }
 
     public void onSaveAddItem(View view) {
@@ -68,6 +72,8 @@ public class AddTask extends AppCompatActivity {
             } else if (value.equals("HIGH") || value.equals("High")) {
                 i.setTaskPriority(itemRecord.HIGH_TO_INT);
             }
+
+            i.setDate(dpDueDate.getYear(), dpDueDate.getMonth() + 1, dpDueDate.getDayOfMonth());
 
             Intent data = new Intent();
             if (isEditTask) {

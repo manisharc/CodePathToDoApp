@@ -23,7 +23,8 @@ The following **optional** features are implemented:
 
 The following **additional** features are implemented:
 
-* [ ] The todo items are sorted based on priority
+* [ ] The todo items are sorted based on priority and are color coded
+* [ ] Instead of using a dialog, the same add_task activity is used for adding a new task as well as editing a task
 * [ ] In the edit page, you can update the todo date, though it is not displayed in the listview
 
 ## Video Walkthrough 

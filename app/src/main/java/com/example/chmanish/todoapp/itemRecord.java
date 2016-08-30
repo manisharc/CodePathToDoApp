@@ -21,13 +21,18 @@ public class itemRecord implements Serializable {
     @Column("taskPriority")
     public int taskPriority;
 
+    @Column("taskDueDateYear")
+    public int taskDueDateYear;
+
+    @Column("taskDueDateMonth")
+    public int taskDueDateMonth;
+
+    @Column("taskDueDateDay")
+    public int taskDueDateDay;
+
     public static int LOW_TO_INT = 2;
     public static int MEDIUM_TO_INT = 1;
     public static int HIGH_TO_INT = 0;
-   /* // Task Due Date
-    public static enum priority {
-        LOW, MEDIUM, HIGH;
-    }*/
 
     public itemRecord(){
         this.taskDescription="";
@@ -62,4 +67,22 @@ public class itemRecord implements Serializable {
         this._id = _id;
     }
 
+    public void setDate(int y, int m, int d){
+        this.taskDueDateDay = d;
+        this.taskDueDateMonth= m;
+        this.taskDueDateYear = y;
+    }
+
+    public int getTaskDueDateYear(){
+        return this.taskDueDateYear;
+    }
+
+    public int getTaskDueDateMonth(){
+        return this.taskDueDateMonth;
+
+    }
+
+    public int getTaskDueDateDay(){
+        return this.taskDueDateDay;
+    }
 }

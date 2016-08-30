@@ -12,7 +12,7 @@ import android.util.Log;
  */
 public class ItemDatabaseHelper extends SQLiteOpenHelper {
     // Database Info
-    private static final String DATABASE_NAME = "itemsDatabase4";
+    private static final String DATABASE_NAME = "todoItemsDB";
     private static final int DATABASE_VERSION = 1;
 
     // Table Name
@@ -22,6 +22,9 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
     private static final String KEY_ITEM_ID = "_id";
     private static final String KEY_ITEM_DESCRIPTION = "itemDescription";
     private static final String KEY_ITEM_PRIORITY = "itemPriority";
+    private static final String KEY_ITEM_YEAR = "itemDueDateYear";
+    private static final String KEY_ITEM_MONTH = "itemDueDateMonth";
+    private static final String KEY_ITEM_DAY = "itemDueDateDay";
 
     private static ItemDatabaseHelper sInstance;
 
@@ -58,7 +61,10 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
                 "(" +
                 KEY_ITEM_ID + " INTEGER PRIMARY KEY AUTOINCREMENT, " + // Define a primary key
                 KEY_ITEM_DESCRIPTION + " TEXT, " +
-                KEY_ITEM_PRIORITY + " INTEGER" +
+                KEY_ITEM_PRIORITY + " INTEGER," +
+                KEY_ITEM_YEAR + " INTEGER," +
+                KEY_ITEM_MONTH + " INTEGER," +
+                KEY_ITEM_DAY + " INTEGER" +
                 ")";
 
 
@@ -85,6 +91,9 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
             ContentValues values = new ContentValues();
             values.put(KEY_ITEM_DESCRIPTION, item.getTaskDescription());
             values.put(KEY_ITEM_PRIORITY, item.getTaskPriority());
+            values.put(KEY_ITEM_YEAR, item.getTaskDueDateYear());
+            values.put(KEY_ITEM_MONTH, item.getTaskDueDateMonth());
+            values.put(KEY_ITEM_DAY, item.getTaskDueDateDay());
 
             itemId = db.insertOrThrow(TABLE_ITEMS, null, values);
             db.setTransactionSuccessful();
@@ -108,6 +117,9 @@ public class ItemDatabaseHelper extends SQLiteOpenHelper {
                     itemRecord item = new itemRecord();
                     item.setTaskDescription(cursor.getString(cursor.getColumnIndex(KEY_ITEM_DESCRIPTION)));
                     item.setTaskPriority(cursor.getInt(cursor.getColumnIndex(KEY_ITEM_PRIORITY)));
+                    item.setDate(cursor.getInt(cursor.getColumnIndex(KEY_ITEM_YEAR)),
+                            cursor.getInt(cursor.getColumnIndex(KEY_ITEM_MONTH)),
+                            cursor.getInt(cursor.getColumnIndex(KEY_ITEM_DAY)));
                     return item;
                 } while(cursor.moveToNext());
             }

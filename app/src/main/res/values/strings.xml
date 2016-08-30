@@ -6,5 +6,6 @@
     <string name="save">Save</string>
     <string name="taskName">Task</string>
     <string name="priority">Priority</string>
+    <string name="duedate">Due Date</string>
     <string name="spinnerPrompt">Low</string>
 </resources>
